@@ -12,13 +12,12 @@ import time
 def get_local_ip():
     """Get the local IP address of this machine"""
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        local_ip = s.getsockname()[0]
-        s.close()
-        return local_ip
-    except:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except Exception:
         return "localhost"
+
 
 def main():
     print("🚀 Document Summarizer - Starting Up!")
