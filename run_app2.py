@@ -1,34 +1,41 @@
-import subprocess
-import time
-import sys
-import os
+"""
+Starts FastAPI backend (8000) + Streamlit frontend (8501).
+"""
+
+import subprocess, time, sys, os
 
 def main():
     print("🚀 Starting On-Prem Summarizer System...")
-    print("="*50)
+    print("=" * 50)
 
-    # Ensure paths are resolved relative to this script
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # run backend.
-    print("🔹 Starting Backend (FastAPI)...")
-    backend_path = os.path.join(script_dir, "backend.py")
+    print("🔹 Starting Backend (FastAPI on port 8000)...")
     backend_process = subprocess.Popen(
-        [sys.executable, backend_path],
+        [sys.executable, os.path.join(script_dir, "backend.py")],
         env=os.environ.copy()
     )
-    
-    # wait a few seconds to ensure the backend is up before starting the frontend
-    time.sleep(3) 
+    time.sleep(3)
 
-    # run frontend.
-    print("🔹 Starting Frontend (Streamlit)...")
+    print("🔹 Starting Frontend (Streamlit on port 8501)...")
     try:
-        frontend_path = os.path.join(script_dir, "frontend.py")
-        subprocess.run([sys.executable, "-m", "streamlit", "run", frontend_path])
+        subprocess.run([
+            sys.executable, "-m", "streamlit", "run",
+            os.path.join(script_dir, "frontend.py"),
+            "--server.port", "8501",
+            "--server.headless", "true",
+            "--browser.gatherUsageStats", "false",
+        ])
     except KeyboardInterrupt:
-        print("\n🛑 Stopping system...")
+        print("\n🛑 Stopping...")
         backend_process.terminate()
+        print("👋 Goodbye!")
+
+    print()
+    print("=" * 50)
+    print("✅ App running at → http://localhost:8501")
+    print("🔧 API Docs       → http://localhost:8000/docs")
+    print("=" * 50)
 
 if __name__ == "__main__":
     main()
