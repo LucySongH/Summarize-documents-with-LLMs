@@ -8,12 +8,13 @@ import docx
 from pathlib import Path
 from evaluation import evaluate_summary
 
-# Config
+
+# Config 
 BACKEND       = "http://localhost:8000"
 MAX_CHARS     = 30000
 POLL_INTERVAL = 2
 
-MODELS        = ["llama3.2", "phi3"]
+MODELS        = ["llama3.2", "phi3", "gemma2:2b"]
 SUMMARY_TYPES = ["comprehensive", "executive", "bullet_points"]
 SUMMARY_LABELS = {
     "comprehensive": "📋 Comprehensive",
@@ -30,22 +31,25 @@ CATEGORY_LABELS = {
     "correspondence": "✉️ Correspondence",
 }
 
-# Page setup
+# Page setup 
 st.set_page_config(layout="wide", page_title="On-Prem AI Summarizer")
 
 st.markdown("""
 <style>
-.main-header  {font-size:2.5rem; color:#1E88E5; text-align:center; margin-bottom:20px;}
-.stButton>button {width:100%; border-radius:5px; height:50px; font-size:18px;}
-.status-box   {padding:10px; border-radius:5px; background:#e8f5e9; border:1px solid #c8e6c9;}
-.result-box   {background:#f8f9fa; border-left:4px solid #1E88E5; padding:1rem 1.2rem;
-    font-size:0.92rem; line-height:1.7; border-radius:0 6px 6px 0; white-space:pre-wrap;}
-.combo-header {background:#f5f5f5; padding:6px 12px; border-radius:4px;
-    font-size:0.82rem; margin-bottom:4px;}
+    .main-header  {font-size:2.5rem; color:#1E88E5; text-align:center; margin-bottom:20px;}
+    .stButton>button {width:100%; border-radius:5px; height:50px; font-size:18px;}
+    .status-box   {padding:10px; border-radius:5px; background:#e8f5e9; border:1px solid #c8e6c9;}
+    .result-box   {background:#f8f9fa; border-left:4px solid #1E88E5; padding:1rem 1.2rem;
+            font-size:0.92rem; line-height:1.7; border-radius:0 6px 6px 0; white-space:pre-wrap;}
+    .combo-header {background:#f5f5f5; padding:6px 12px; border-radius:4px;
+            font-size:0.82rem; margin-bottom:4px;}
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-header">📄 Secure On-Prem Document Summarizer</div>', unsafe_allow_html=True)
+
+
+# Shared helpers 
 
 def check_backend() -> bool:
     try:
@@ -161,7 +165,7 @@ def build_excel(results: list) -> bytes:
     def cell_style(cell, fill=WHITE_FILL, font=NORMAL_FONT, align=CENTER):
         cell.fill, cell.font, cell.alignment, cell.border = fill, font, align, BORDER
 
-    # Full Results
+    # Full Results 
     ws1 = wb.active
     ws1.title = "Full Results"
 
@@ -174,7 +178,7 @@ def build_excel(results: list) -> bytes:
     ws1.row_dimensions[1].height = 28
 
     headers = ["Doc Category", "Model", "Summary Type", "Starts on Topic ✓",
-    "Word Count", "Time (s)", "Readability Score", "Readability Label", "Summary Preview"]
+               "Word Count", "Time (s)", "Readability Score", "Readability Label", "Summary Preview"]
     for col, h in enumerate(headers, 1):
         hdr(ws1.cell(row=2, column=col, value=h))
     ws1.row_dimensions[2].height = 22
@@ -217,7 +221,7 @@ def build_excel(results: list) -> bytes:
     ws2.row_dimensions[1].height = 28
 
     for col, h in enumerate(["Model","Summary Type","Avg Time (s)","Avg Words",
-        "Avg Readability","Topic Start %","Overall Score*"], 1):
+                "Avg Readability","Topic Start %","Overall Score*"], 1):
         hdr(ws2.cell(row=2, column=col, value=h))
 
     pivot_row = 3
@@ -245,7 +249,7 @@ def build_excel(results: list) -> bytes:
     note_row = pivot_row + 1
     ws2.merge_cells(f"A{note_row}:G{note_row}")
     n = ws2.cell(row=note_row, column=1,
-        value="* Overall Score = 40% Readability + 40% Topic Start Rate + 20% Speed")
+            value="* Overall Score = 40% Readability + 40% Topic Start Rate + 20% Speed")
     n.font = Font(name="Arial", italic=True, size=9, color="757575")
     n.alignment = LEFT
 
@@ -257,6 +261,7 @@ def build_excel(results: list) -> bytes:
     wb.save(buf)
     buf.seek(0)
     return buf.read()
+
 
 # Sidebar
 
@@ -273,7 +278,7 @@ with st.sidebar:
     st.markdown("---")
     st.info(f"⚡ CPU Mode: text capped at {MAX_CHARS:,} chars")
 
-# Backend guard
+# Backend guard 
 
 if not check_backend():
     st.error("⚠️ Backend is not running. Start with:\n```\npython run_app.py\n```")
@@ -284,11 +289,11 @@ if not check_backend():
 
 tab_summarize, tab_matrix, tab_history = st.tabs(["📄 Summarize", "📊 Model Matrix", "📜 History"])
 
-# Single Summarize
+# Summarize (multi-file queue)
 
 with tab_summarize:
 
-    # Session state init
+    # Session state init 
     if "queue_files" not in st.session_state:
         st.session_state["queue_files"] = []   # list of {name, text}
     if "job_history" not in st.session_state:
@@ -308,31 +313,25 @@ with tab_summarize:
 
     st.markdown("---")
 
-    # File uploader + Add button
-    st.markdown("**3️⃣ Add Documents to Queue**")
-    col_up, col_add = st.columns([4, 1])
+    # File uploader (multi-file)
+    # Supports: drag & drop multiple files, multi-select (Ctrl/Cmd+click), folder selection
+    st.markdown("**3️⃣ Upload Documents**")
+    st.caption("💡 Tip: drag & drop multiple files at once, or Ctrl+click / Cmd+click to select multiple files")
 
-    with col_up:
-        uploaded_file = st.file_uploader(
-            "Select a file (PDF, DOCX, TXT)",
-            type=["pdf", "docx", "txt"],
-            key="uploader_single",
-            label_visibility="collapsed"
-        )
-    with col_add:
-        # Vertical spacer to align button with uploader
-        st.markdown("<div style='margin-top:4px'></div>", unsafe_allow_html=True)
-        add_clicked = st.button("➕ Add to Queue", use_container_width=True, key="btn_add")
+    uploaded_files = st.file_uploader(
+        "Select files (PDF, DOCX, TXT)",
+        type=["pdf", "docx", "txt"],
+        accept_multiple_files=True,
+        key="uploader_single",
+        label_visibility="collapsed"
+    )
 
-    # Add file to queue list when Add is clicked
-    if add_clicked:
-        if uploaded_file is None:
-            st.warning("Please select a file first.")
-        else:
-            already = [f["name"] for f in st.session_state["queue_files"]]
-            if uploaded_file.name in already:
-                st.warning(f"`{uploaded_file.name}` is already in the queue.")
-            else:
+    # Auto-add newly uploaded files to queue (skip duplicates)
+    if uploaded_files:
+        already = [f["name"] for f in st.session_state["queue_files"]]
+        new_count = 0
+        for uploaded_file in uploaded_files:
+            if uploaded_file.name not in already:
                 text = extract_text(uploaded_file)
                 if text:
                     st.session_state["queue_files"].append({
@@ -340,9 +339,10 @@ with tab_summarize:
                         "text": text,
                         "chars": len(text),
                     })
-                    st.success(f"✅ `{uploaded_file.name}` added to queue.")
-                else:
-                    st.error("Could not extract text from this file.")
+                    new_count += 1
+        if new_count:
+            st.success(f"✅ {new_count} file(s) added to queue.")
+
 
     # Queue preview
     queue = st.session_state["queue_files"]
@@ -412,7 +412,7 @@ with tab_summarize:
                     st.error(f"❌ `{filename}` failed.")
 
                 progress.progress((idx + 1) / len(job_map),
-                    text=f"Completed {idx+1}/{len(job_map)}")
+                            text=f"Completed {idx+1}/{len(job_map)}")
                 st.markdown("---")
 
             # Clear queue after run
@@ -498,7 +498,7 @@ with tab_matrix:
                     result = poll_until_done(jid)
                     completed_count += 1
                     progress.progress(completed_count / total_combos,
-                            text=f"Completed {completed_count}/{total_combos}")
+                                text=f"Completed {completed_count}/{total_combos}")
 
                     slot = result_slots[(model, stype)]
                     if result:
@@ -572,7 +572,7 @@ with tab_matrix:
                     # Save to session for export
                     st.session_state["matrix_results"] = all_results
 
-    # Export
+    # Export (shown if results exist from this session) 
     if "matrix_results" in st.session_state:
         st.markdown("---")
         st.subheader("Export Results")
@@ -595,7 +595,7 @@ with tab_matrix:
                 use_container_width=True,
             )
 
-# History
+# TAB 3 — History
 
 with tab_history:
     history = st.session_state.get("job_history", [])
