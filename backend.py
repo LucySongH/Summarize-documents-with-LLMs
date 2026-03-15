@@ -27,7 +27,7 @@ job_queue = SummarizationQueue()
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
 # Model registry 
-AVAILABLE_MODELS = ["llama3.2", "phi3"]
+AVAILABLE_MODELS = ["llama3.2", "phi3", "gemma2:2b"]
 
 
 # Prompt templates
