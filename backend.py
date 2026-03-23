@@ -88,7 +88,7 @@ def summarize(text: str, model_name: str, summary_type: str) -> str:
     }
 
     try:
-        resp = http_requests.post(OLLAMA_URL, json=payload, timeout=300)
+        resp = http_requests.post(OLLAMA_URL, json=payload, timeout=600)
         resp.raise_for_status()
         result = resp.json().get("response", "").strip()
         if not result:
