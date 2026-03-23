@@ -1,5 +1,6 @@
 import io
 import time
+import csv
 import streamlit as st
 import requests
 import pandas as pd
@@ -8,7 +9,19 @@ import docx
 from pathlib import Path
 from evaluation import evaluate_summary
 
-
+#file types
+try:
+    from pptx import Presentation as PptxPresentation
+    PPTX_AVAILABLE = True
+except ImportError:
+    PPTX_AVAILABLE = False
+ 
+try:
+    import openpyxl
+    XLSX_AVAILABLE = True
+except ImportError:
+    XLSX_AVAILABLE = False
+    
 # Config 
 BACKEND       = "http://localhost:8000"
 MAX_CHARS     = 30000
@@ -86,12 +99,57 @@ def extract_text(file) -> str | None:
                 if len(text) > MAX_CHARS:
                     text += "\n...(Text truncated for speed)..."
                     break
-        elif ext == ".txt":
-            text = file.read().decode("utf-8")[:MAX_CHARS]
+        elif ext in [".txt", ".py", ".md", ".html", ".htm"]:
+            raw = file.read().decode("utf-8", errors="ignore")
+            text = raw[:MAX_CHARS]
+        elif ext in [".pptx", ".ppt"]:
+            if not PPTX_AVAILABLE:
+                st.warning("python-pptx not installed. Run: pip install python-pptx")
+                return None
+            prs = PptxPresentation(file)
+            for i, slide in enumerate(prs.slides):
+                text += f"\n--- Slide {i+1} ---\n"
+                for shape in slide.shapes:
+                    if hasattr(shape, "text") and shape.text.strip():
+                        text += shape.text.strip() + "\n"
+                if len(text) > MAX_CHARS:
+                    text += "\n...(Text truncated for speed)..."
+                    break
+        elif ext in [".xlsx", ".xls"]:
+            if not XLSX_AVAILABLE:
+                st.warning("openpyxl not installed. Run: pip install openpyxl")
+                return None
+            wb = openpyxl.load_workbook(file, read_only=True, data_only=True)
+            for sheet_name in wb.sheetnames:
+                ws = wb[sheet_name]
+                if not hasattr(ws, "iter_rows"):
+                    continue
+                text += f"\n--- Sheet: {sheet_name} ---\n"
+                for row in ws.iter_rows(values_only=True):
+                    row_text = "\t".join(str(c) if c is not None else "" for c in row)
+                    if row_text.strip():
+                        text += row_text + "\n"
+                if len(text) > MAX_CHARS:
+                    text += "\n...(Text truncated for speed)..."
+                    break
+        elif ext == ".csv":
+            raw = file.read().decode("utf-8", errors="ignore")
+            reader = csv.reader(raw.splitlines())
+            for row in reader:
+                text += ", ".join(row) + "\n"
+                if len(text) > MAX_CHARS:
+                    text += "\n...(Text truncated for speed)..."
+                    break
+ 
+        else:
+            st.warning(f"Unsupported file type: `{ext}`. Supported: PDF, DOCX, TXT, PPTX, XLSX, CSV, PY, MD, HTML")
+            return None
+ 
     except Exception as e:
-        st.error(f"Error reading file: {e}")
+        st.error(f"Error reading `{file.name}`: {e}")
         return None
-    return text or None
+ 
+    return text.strip() or None
 
 def submit_job(text: str, model_name: str, summary_type: str) -> str | None:
     try:
@@ -320,7 +378,7 @@ with tab_summarize:
 
     uploaded_files = st.file_uploader(
         "Select files (PDF, DOCX, TXT)",
-        type=["pdf", "docx", "txt"],
+        type=["pdf", "docx", "txt", "pptx", "ppt", "xlsx", "xls", "csv", "py", "md", "html", "htm", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"],
         accept_multiple_files=True,
         key="uploader_single",
         label_visibility="collapsed"
@@ -431,7 +489,7 @@ with tab_matrix:
     with col_file:
         matrix_file = st.file_uploader(
             "Upload Test Document",
-            type=["pdf", "docx", "txt"],
+            type=["pdf", "docx", "txt", "pptx", "ppt", "xlsx", "xls", "csv", "py", "md", "html", "htm", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"],
             key="uploader_matrix"
         )
     with col_cat:
