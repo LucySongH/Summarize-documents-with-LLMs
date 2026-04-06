@@ -82,8 +82,8 @@ def summarize(text: str, model_name: str, summary_type: str) -> str:
         "keep_alive": -1,       # keep model loaded in Ollama between jobs
         "options": {
             "temperature": 0.3, # lower = more factual, less hallucination
-            "num_predict": 500, # max output tokens
-            "num_ctx": 4096,    # context window
+            "num_predict": 800, # max output tokens
+            "num_ctx": 8000,    # context window
         },
     }
 
