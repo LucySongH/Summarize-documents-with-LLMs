@@ -1,3 +1,12 @@
+"""
+frontend.py — Streamlit UI (all-in-one).
+
+Tabs:
+  📄 Summarize    — single document summarization
+  📊 Model Matrix — run all model × summary type combinations + Excel export
+  📜 History      — past jobs this session
+"""
+
 import io
 import time
 import csv
@@ -9,19 +18,32 @@ import docx
 from pathlib import Path
 from evaluation import evaluate_summary
 
-#file types
+# Optional imports for new file types
 try:
     from pptx import Presentation as PptxPresentation
     PPTX_AVAILABLE = True
 except ImportError:
     PPTX_AVAILABLE = False
- 
+
 try:
     import openpyxl
     XLSX_AVAILABLE = True
 except ImportError:
     XLSX_AVAILABLE = False
-    
+
+try:
+    from bs4 import BeautifulSoup
+    BS4_AVAILABLE = True
+except ImportError:
+    BS4_AVAILABLE = False
+
+# File types that need the html_code prompt
+HTML_CODE_EXTENSIONS = {".html", ".htm", ".py", ".js", ".css", ".ts"}
+
+# File types that need the excel prompt
+EXCEL_EXTENSIONS = {".xlsx", ".xls", ".csv"}
+
+
 # Config 
 BACKEND       = "http://localhost:8000"
 MAX_CHARS     = 30000
@@ -53,9 +75,9 @@ st.markdown("""
     .stButton>button {width:100%; border-radius:5px; height:50px; font-size:18px;}
     .status-box   {padding:10px; border-radius:5px; background:#e8f5e9; border:1px solid #c8e6c9;}
     .result-box   {background:#f8f9fa; border-left:4px solid #1E88E5; padding:1rem 1.2rem;
-            font-size:0.92rem; line-height:1.7; border-radius:0 6px 6px 0; white-space:pre-wrap;}
+                   font-size:0.92rem; line-height:1.7; border-radius:0 6px 6px 0; white-space:pre-wrap;}
     .combo-header {background:#f5f5f5; padding:6px 12px; border-radius:4px;
-            font-size:0.82rem; margin-bottom:4px;}
+                   font-size:0.82rem; margin-bottom:4px;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -80,9 +102,15 @@ def get_model_status() -> list:
     return []
 
 def extract_text(file) -> str | None:
+    """
+    Extract text from multiple file formats:
+      PDF, DOCX, TXT, PPTX, XLSX, CSV, PY, MD, HTML
+    """
     text = ""
     try:
         ext = Path(file.name).suffix.lower()
+
+        # PDF
         if ext == ".pdf":
             reader = PyPDF2.PdfReader(file)
             for page in reader.pages:
@@ -92,6 +120,8 @@ def extract_text(file) -> str | None:
                 if len(text) > MAX_CHARS:
                     text += "\n...(Text truncated for speed)..."
                     break
+
+        # DOCX 
         elif ext == ".docx":
             doc = docx.Document(file)
             for para in doc.paragraphs:
@@ -99,9 +129,17 @@ def extract_text(file) -> str | None:
                 if len(text) > MAX_CHARS:
                     text += "\n...(Text truncated for speed)..."
                     break
+
+        # TXT / PY / MD / HTML 
         elif ext in [".txt", ".py", ".md", ".html", ".htm"]:
             raw = file.read().decode("utf-8", errors="ignore")
+            # Strip HTML tags for .html/.htm files
+            if ext in [".html", ".htm"] and BS4_AVAILABLE:
+                soup = BeautifulSoup(raw, "html.parser")
+                raw = soup.get_text(separator="\n")
             text = raw[:MAX_CHARS]
+
+        # PPTX 
         elif ext in [".pptx", ".ppt"]:
             if not PPTX_AVAILABLE:
                 st.warning("python-pptx not installed. Run: pip install python-pptx")
@@ -115,23 +153,35 @@ def extract_text(file) -> str | None:
                 if len(text) > MAX_CHARS:
                     text += "\n...(Text truncated for speed)..."
                     break
+
+        # XLSX
         elif ext in [".xlsx", ".xls"]:
             if not XLSX_AVAILABLE:
                 st.warning("openpyxl not installed. Run: pip install openpyxl")
                 return None
-            wb = openpyxl.load_workbook(file, read_only=True, data_only=True)
-            for sheet_name in wb.sheetnames:
-                ws = wb[sheet_name]
-                if not hasattr(ws, "iter_rows"):
-                    continue
-                text += f"\n--- Sheet: {sheet_name} ---\n"
-                for row in ws.iter_rows(values_only=True):
-                    row_text = "\t".join(str(c) if c is not None else "" for c in row)
-                    if row_text.strip():
-                        text += row_text + "\n"
+            import pandas as pd
+            xl = pd.ExcelFile(file)
+            for sheet_name in xl.sheet_names:
+                try:
+                    df = xl.parse(sheet_name)
+                    if df.empty:
+                        continue
+                    text += f"\n--- Sheet: {sheet_name} ---\n"
+                    # Keep header-value relationships intact
+                    for _, row in df.iterrows():
+                        row_parts = []
+                        for col, val in row.items():
+                            if pd.notna(val) and str(val).strip():
+                                row_parts.append(f"{col}: {val}")
+                        if row_parts:
+                            text += " | ".join(row_parts) + "\n"
+                except Exception:
+                    continue  # skip unreadable sheets (e.g. chart sheets)
                 if len(text) > MAX_CHARS:
                     text += "\n...(Text truncated for speed)..."
                     break
+
+        # CSV
         elif ext == ".csv":
             raw = file.read().decode("utf-8", errors="ignore")
             reader = csv.reader(raw.splitlines())
@@ -140,18 +190,25 @@ def extract_text(file) -> str | None:
                 if len(text) > MAX_CHARS:
                     text += "\n...(Text truncated for speed)..."
                     break
- 
+
         else:
             st.warning(f"Unsupported file type: `{ext}`. Supported: PDF, DOCX, TXT, PPTX, XLSX, CSV, PY, MD, HTML")
             return None
- 
+
     except Exception as e:
         st.error(f"Error reading `{file.name}`: {e}")
         return None
- 
+
     return text.strip() or None
 
-def submit_job(text: str, model_name: str, summary_type: str) -> str | None:
+def submit_job(text: str, model_name: str, summary_type: str,
+               filename: str = "") -> str | None:
+    # Auto-select prompt type based on file extension
+    ext = Path(filename).suffix.lower() if filename else ""
+    if ext in HTML_CODE_EXTENSIONS:
+        summary_type = "html_code"
+    elif ext in EXCEL_EXTENSIONS:
+        summary_type = "excel"
     try:
         resp = requests.post(
             f"{BACKEND}/summarize",
@@ -279,7 +336,7 @@ def build_excel(results: list) -> bytes:
     ws2.row_dimensions[1].height = 28
 
     for col, h in enumerate(["Model","Summary Type","Avg Time (s)","Avg Words",
-                "Avg Readability","Topic Start %","Overall Score*"], 1):
+                              "Avg Readability","Topic Start %","Overall Score*"], 1):
         hdr(ws2.cell(row=2, column=col, value=h))
 
     pivot_row = 3
@@ -307,7 +364,7 @@ def build_excel(results: list) -> bytes:
     note_row = pivot_row + 1
     ws2.merge_cells(f"A{note_row}:G{note_row}")
     n = ws2.cell(row=note_row, column=1,
-            value="* Overall Score = 40% Readability + 40% Topic Start Rate + 20% Speed")
+                 value="* Overall Score = 40% Readability + 40% Topic Start Rate + 20% Speed")
     n.font = Font(name="Arial", italic=True, size=9, color="757575")
     n.alignment = LEFT
 
@@ -335,6 +392,9 @@ with st.sidebar:
         st.error("Backend offline")
     st.markdown("---")
     st.info(f"⚡ CPU Mode: text capped at {MAX_CHARS:,} chars")
+    st.markdown("---")
+    st.markdown("**📁 Supported formats:**")
+    st.markdown("PDF, DOCX, TXT, PPTX, XLSX, CSV, PY, MD, HTML")
 
 # Backend guard 
 
@@ -347,17 +407,19 @@ if not check_backend():
 
 tab_summarize, tab_matrix, tab_history = st.tabs(["📄 Summarize", "📊 Model Matrix", "📜 History"])
 
+
+
 # Summarize (multi-file queue)
 
 with tab_summarize:
 
-    # Session state init 
+    # Session state init
     if "queue_files" not in st.session_state:
         st.session_state["queue_files"] = []   # list of {name, text}
     if "job_history" not in st.session_state:
         st.session_state["job_history"] = []
 
-    # Settings row 
+    # Settings row
     col1, col2 = st.columns(2)
     with col1:
         summary_type = st.selectbox(
@@ -430,7 +492,7 @@ with tab_summarize:
             # Submit all jobs at once (non-blocking — this is where Job Queue shines)
             job_map = {}   # filename → job_id
             for f in queue:
-                jid = submit_job(f["text"], selected_model, summary_type)
+                jid = submit_job(f["text"], selected_model, summary_type, filename=f["name"])
                 if jid:
                     job_map[f["name"]] = jid
                     st.session_state["job_history"].append({
@@ -470,7 +532,7 @@ with tab_summarize:
                     st.error(f"❌ `{filename}` failed.")
 
                 progress.progress((idx + 1) / len(job_map),
-                            text=f"Completed {idx+1}/{len(job_map)}")
+                                  text=f"Completed {idx+1}/{len(job_map)}")
                 st.markdown("---")
 
             # Clear queue after run
@@ -534,7 +596,7 @@ with tab_matrix:
                 job_map = {}
                 for model in selected_models:
                     for stype in selected_types:
-                        jid = submit_job(matrix_text, model, stype)
+                        jid = submit_job(matrix_text, model, stype, filename=matrix_file.name)
                         if jid:
                             job_map[(model, stype)] = jid
 
@@ -556,7 +618,7 @@ with tab_matrix:
                     result = poll_until_done(jid)
                     completed_count += 1
                     progress.progress(completed_count / total_combos,
-                                text=f"Completed {completed_count}/{total_combos}")
+                                      text=f"Completed {completed_count}/{total_combos}")
 
                     slot = result_slots[(model, stype)]
                     if result:
@@ -630,7 +692,7 @@ with tab_matrix:
                     # Save to session for export
                     st.session_state["matrix_results"] = all_results
 
-    # Export (shown if results exist from this session) 
+    # Export (shown if results exist from this session)
     if "matrix_results" in st.session_state:
         st.markdown("---")
         st.subheader("Export Results")
@@ -653,7 +715,7 @@ with tab_matrix:
                 use_container_width=True,
             )
 
-# TAB 3 — History
+# History
 
 with tab_history:
     history = st.session_state.get("job_history", [])
