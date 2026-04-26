@@ -1,12 +1,5 @@
 """
 backend.py — FastAPI backend with Job Queue + Ollama (no langchain needed).
-Changes from prototype:
-  - Removed langchain dependency (direct requests to Ollama REST API)
-  - Added Job Queue via job_queue.py (non-blocking summarization)
-  - Improved prompts: summary now starts with document type/purpose (Pascal feedback)
-  - Added /job/{id} polling endpoint and /status endpoint
-""""""
-backend.py — FastAPI backend with Job Queue + Ollama (no langchain needed).
 
 Changes from prototype:
   - Removed langchain dependency (direct requests to Ollama REST API)
