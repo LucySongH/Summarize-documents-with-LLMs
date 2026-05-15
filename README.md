@@ -193,7 +193,7 @@ File-specific prompts are auto-selected based on file extension.
 ## Deployment
 
 The system uses a local deployment approach for optimal performance on CPU-only machines.
-
+Go to the Docker Folder.
 **Windows**
 
 Install Python - check "Add Python to PATH"
