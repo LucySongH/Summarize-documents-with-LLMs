@@ -197,7 +197,7 @@ def summarize(text: str, model_name: str, summary_type: str) -> str:
     }
 
     try:
-        resp = http_requests.post(OLLAMA_URL, json=payload, timeout=600)
+        resp = http_requests.post(OLLAMA_URL, json=payload, timeout=1200)  # 20 min — Docker needs longer for first model load
         resp.raise_for_status()
         result = resp.json().get("response", "").strip()
         if not result:
