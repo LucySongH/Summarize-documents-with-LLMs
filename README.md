@@ -47,8 +47,8 @@ DocSum/
 ├── frontend.py         Streamlit frontend - 3 tabs: Summarize, Model Matrix, History
 ├── job_queue.py        Async job queue - non-blocking background processing
 ├── evaluation.py       Quality metrics - readability, word count, topic check
-├── run_app.py          One-command launcher (starts backend + frontend)
-└── requirements.txt    Python dependencies
+├── run_app2.py          One-command launcher (starts backend + frontend)
+└── requirements2.txt    Python dependencies
 ```
 
 ---
