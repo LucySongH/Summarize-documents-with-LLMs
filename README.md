@@ -15,13 +15,13 @@ The system allows users to upload documents and generate AI-powered summaries us
 
 ## Features
 
-- **Multi-format support** — PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, PY
-- **Multi-model comparison** — llama3.2, phi3, gemma2:2b side by side
-- **Non-blocking job queue** — upload multiple files, process in background
-- **Model Matrix** — compare all model × summary type combinations at once
-- **Quality metrics** — Flesch readability, word count, topic identification
-- **Export results** — download summaries as `.txt` or matrix results as `.xlsx`
-- **Fully offline** — works with no internet after initial model download
+- **Multi-format support** - PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, PY
+- **Multi-model comparison** - llama3.2, phi3, gemma2:2b side by side
+- **Non-blocking job queue** - upload multiple files, process in background
+- **Model Matrix** - compare all model × summary type combinations at once
+- **Quality metrics** - Flesch readability, word count, topic identification
+- **Export results** - download summaries as `.txt` or matrix results as `.xlsx`
+- **Fully offline** - works with no internet after initial model download
 
 ---
 
