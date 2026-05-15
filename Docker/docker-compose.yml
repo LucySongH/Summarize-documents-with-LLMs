@@ -1,0 +1,43 @@
+# docker-compose.yml — DocSum Full Stack
+# Starts two services:
+#   1. ollama   — AI model server (keeps model in memory)
+#   2. docsum   — Our FastAPI backend + Streamlit frontend
+
+version: '3.8'
+
+services:
+
+  # ── Ollama — AI Model Server ───────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: docsum_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      # Store downloaded models on host machine
+      # So models survive container restarts (no re-download needed)
+      - ./ollama_data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── DocSum App — Backend + Frontend ────────────────────────────────────────
+  docsum:
+    build: .
+    container_name: docsum_app
+    ports:
+      - "8000:8000"   # FastAPI backend
+      - "8501:8501"   # Streamlit frontend
+    environment:
+      # Tell backend to connect to ollama container (not localhost)
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      # Optional: mount logs folder to host for debugging
+      - ./logs:/app/logs
