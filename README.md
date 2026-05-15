@@ -207,7 +207,7 @@ See the `docker/` folder for `Dockerfile`, `docker-compose.yml`, and `start.bat`
 | Yu Gu | Human Rubric Scoring & Documentation |
 
 **Supervisor:** Yanbin  
-**Client:** Pascal — Pingar  
+**Client:** Pingar  
 **Institution:** Auckland University of Technology (AUT)
 
 ---
