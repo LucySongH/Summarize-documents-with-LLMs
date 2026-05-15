@@ -190,10 +190,25 @@ File-specific prompts are auto-selected based on file extension.
 
 ---
 
-## Docker Deployment
+## Deployment
 
-A Docker version is available for end-user deployment (no Python or Ollama install required).  
-See the `docker/` folder for `Dockerfile`, `docker-compose.yml`, and `start.bat` / `start.sh`.
+The system uses a local deployment approach for optimal performance on CPU-only machines.
+
+**Windows**
+
+Install Python - check "Add Python to PATH"
+Install Ollama
+Run install.bat (first time only - downloads AI models)
+Run start.bat to launch the app
+
+**Mac / Linux**
+
+Install Python
+Install Ollama
+Run ./install.sh (first time only)
+Run ./start.sh to launch the app
+
+Then open: http://localhost:8501
 
 ---
 
