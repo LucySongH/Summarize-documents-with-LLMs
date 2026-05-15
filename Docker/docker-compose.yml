@@ -14,15 +14,14 @@ services:
     ports:
       - "11434:11434"
     volumes:
-      # Store downloaded models on host machine
-      # So models survive container restarts (no re-download needed)
       - ./ollama_data:/root/.ollama
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
   # ── DocSum App — Backend + Frontend ────────────────────────────────────────
   docsum:
@@ -32,11 +31,11 @@ services:
       - "8000:8000"   # FastAPI backend
       - "8501:8501"   # Streamlit frontend
     environment:
-      # Tell backend to connect to ollama container (not localhost)
+      # Tell backend to connect to ollama container
       - OLLAMA_HOST=http://ollama:11434
     depends_on:
       ollama:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
     volumes:
       # Optional: mount logs folder to host for debugging
