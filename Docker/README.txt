@@ -202,5 +202,5 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  DocSum  |  AUT Year-Long Project  |  Client: Pingar
+  DocSum  |  AUT R&D Project  |  Client: Pingar
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
