@@ -149,11 +149,23 @@
                               In Docker Desktop → Settings →
                               Resources → increase Memory to 8GB+
 
-  Summarization taking long   This is normal on CPU — each
-                              document takes 1–5 minutes
+  Summarization taking long   This is normal on CPU - each
+                              document takes 1-5 minutes
                               Use phi3 or gemma2 for faster results
 
   Backend not running         Restart the app with start.bat
+
+  "Ollama timed out" error    The document is too large or complex.
+                              Try one of the following:
+                                • Use a shorter document
+                                • Switch to phi3 or gemma2:2b
+                                • Split the document into sections
+  No response after upload    This is normal - the AI model is
+                              loading for the first time.
+                              First summarization takes 3–5 min.
+                              Wait and do not close the browser.
+                              Subsequent runs will be faster.
+
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
