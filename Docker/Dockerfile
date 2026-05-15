@@ -19,6 +19,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all project files
 COPY . .
 
+# Create Streamlit config to prevent connection timeouts
+RUN mkdir -p /root/.streamlit && echo '\
+[server]\n\
+maxUploadSize = 200\n\
+enableXsrfProtection = false\n\
+[browser]\n\
+gatherUsageStats = false\n\
+' > /root/.streamlit/config.toml
+
 # Expose ports
 EXPOSE 8000 8501
 
