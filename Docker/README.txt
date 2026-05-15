@@ -1,4 +1,3 @@
-
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
 ║           DocSum — On-Premise Document Summarizer            ║
@@ -13,50 +12,46 @@
   BEFORE YOU START
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  You only need ONE thing installed:
+  You need TWO things installed:
 
-    Docker Desktop
-    → Download: https://www.docker.com/products/docker-desktop/
+  1. Python (3.10 or newer)
+     → Download: https://www.python.org/downloads/
+     → IMPORTANT: Check "Add Python to PATH" during installation
 
-  That's it. No Python. No Ollama. No other installs.
-
-  Minimum requirements:
-    • 8 GB RAM  (16 GB recommended)
-    • 10 GB free disk space  (for AI models)
-    • Windows 10/11  or  macOS
+  2. Ollama (AI model server)
+     → Download: https://ollama.com/download
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  HOW TO START
+  FIRST TIME SETUP  (run once only)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Windows
   ───────
-  1. Make sure Docker Desktop is running
-  2. Double-click  start.bat
-  3. Wait for setup to finish (first run takes 5–15 minutes)
-  4. Open your browser and go to:
-
-       http://localhost:8501
+  Double-click  install.bat
 
   Mac / Linux
   ───────────
-  1. Make sure Docker Desktop is running
-  2. Open Terminal in this folder and run:
+  Open Terminal in this folder and run:
 
-       chmod +x start.sh
-       ./start.sh
+    chmod +x install.sh start.sh
+    ./install.sh
 
-  3. Wait for setup to finish (first run takes 5–15 minutes)
-  4. Open your browser and go to:
-
-       http://localhost:8501
-
-
-  ⚠️  First run only:
-      The app will automatically download 3 AI models (~5 GB total).
+  ⚠️  First time setup downloads 3 AI models (~6 GB total).
       This requires an internet connection just this one time.
       After that, everything runs completely offline.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  HOW TO START  (every time)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Windows        Double-click  start.bat
+  Mac / Linux    Run  ./start.sh  in Terminal
+
+  Then open your browser and go to:
+
+    http://localhost:8501
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -118,13 +113,17 @@
   phi3           ~2.3 GB Fast, good for most documents
   gemma2:2b      ~1.7 GB Fastest, best for short documents
 
+  ⏱️  Expected processing times:
+      First run   : 3–5 min (model loading + inference)
+      After that  : 1–3 min (model already in memory)
+      Short docs  : 30–60 seconds
+
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   HOW TO STOP
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Windows        Double-click  stop.bat
-  Mac / Linux    Run  ./stop.sh  in Terminal
+  Press Ctrl+C in the terminal window where start.bat is running.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -133,40 +132,25 @@
 
   Problem                    Solution
   ─────────────────────────────────────────────────────────────
-  Docker not running          Open Docker Desktop, wait for it
-                              to fully start, then try again
+  'python' not recognised     Reinstall Python and check
+                              "Add Python to PATH"
 
-  App won't open              Wait 30 seconds after start.bat
+  'ollama' not recognised     Restart your computer after
+                              installing Ollama
+
+  App won't open              Wait 10 seconds after start.bat
                               finishes, then refresh the browser
-
-  Port already in use         Run: docker compose down
-                              Then try start.bat again
 
   Models not downloading      Check your internet connection
                               (only needed for first run)
 
-  Out of memory error         Close other applications
-                              In Docker Desktop → Settings →
-                              Resources → increase Memory to 8GB+
-
-  Summarization taking long   This is normal on CPU - each
-                              document takes 1-5 minutes
-                              Use phi3 or gemma2 for faster results
-
-  Backend not running         Restart the app with start.bat
-
-  "Ollama timed out" error    The document is too large or complex.
-                              Try one of the following:
-                                • Use a shorter document
-                                • Switch to phi3 or gemma2:2b
-                                • Split the document into sections
-
-  No response after upload    This is normal - the AI model is
-                              loading for the first time.
-                              First summarization takes 3–5 min.
+  No response after upload    First summarization takes 3–5 min.
                               Wait and do not close the browser.
-                              Subsequent runs will be faster.
 
+  "Ollama timed out" error    Try a shorter document or switch
+                              to phi3 or gemma2:2b model
+
+  Backend not running         Run start.bat again
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -174,20 +158,17 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   DocSum/
-  ├── start.bat            ← Windows: run to start
-  ├── start.sh             ← Mac/Linux: run to start
-  ├── stop.bat             ← Windows: run to stop
-  ├── stop.sh              ← Mac/Linux: run to stop
-  ├── README.txt           ← This file
-  ├── docker-compose.yml   ← Docker configuration
-  ├── Dockerfile           ← App build instructions
-  ├── backend.py           ← API server
-  ├── frontend.py          ← Web interface
-  ├── job_queue.py         ← Job queue
-  ├── evaluation.py        ← Quality metrics
-  ├── run_app.py           ← App launcher
-  ├── requirements.txt     ← Python packages
-  └── ollama_data/         ← AI models (auto-created on first run)
+  ├── install.bat        ← Windows: run ONCE to set up
+  ├── install.sh         ← Mac/Linux: run ONCE to set up
+  ├── start.bat          ← Windows: run to start app
+  ├── start.sh           ← Mac/Linux: run to start app
+  ├── README.txt         ← This file
+  ├── backend.py         ← API server
+  ├── frontend.py        ← Web interface
+  ├── job_queue.py       ← Job queue
+  ├── evaluation.py      ← Quality metrics
+  ├── run_app.py         ← App launcher
+  └── requirements.txt   ← Python packages
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -198,9 +179,9 @@
   ✅  No document data is sent to external servers
   ✅  No API keys required
   ✅  Works fully offline after first setup
-  ✅  AI models are stored locally in the ollama_data/ folder
+  ✅  AI models are stored locally by Ollama
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  DocSum  |  AUT R&D Project  |  Client: Pingar
+  DocSum  |  AUT Year-Long Project  |  Client: Pingar
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
