@@ -1,4 +1,5 @@
 """
+run_app.py — One-command launcher.
 Starts FastAPI backend (8000) + Streamlit frontend (8501).
 """
 
@@ -25,6 +26,8 @@ def main():
             "--server.port", "8501",
             "--server.headless", "true",
             "--browser.gatherUsageStats", "false",
+            "--server.maxUploadSize", "200",
+            "--server.scriptHealthCheckEnabled", "false",
         ])
     except KeyboardInterrupt:
         print("\n🛑 Stopping...")
