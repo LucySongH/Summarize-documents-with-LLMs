@@ -160,6 +160,7 @@
                                 • Use a shorter document
                                 • Switch to phi3 or gemma2:2b
                                 • Split the document into sections
+
   No response after upload    This is normal - the AI model is
                               loading for the first time.
                               First summarization takes 3–5 min.
