@@ -28,7 +28,7 @@ The system allows users to upload documents and generate AI-powered summaries us
 ## Architecture
 
 ```
-run_app.py
+run_app2.py
     ├── backend.py      FastAPI server (port 8000)
     │       └── job_queue.py    Async job queue (asyncio)
     │               └── Ollama  Local LLM server (port 11434)
