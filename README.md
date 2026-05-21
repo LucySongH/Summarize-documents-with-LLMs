@@ -65,8 +65,7 @@ DocSum/
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/your-username/docsum.git
-cd docsum
+gh repo clone LucySongH/Summarize-documents-with-LLMs
 ```
 
 **2. Install Python dependencies**
