@@ -71,7 +71,7 @@ cd docsum
 
 **2. Install Python dependencies**
 ```bash
-pip install -r requirements.txt
+pip install -r requirements2.txt
 ```
 
 **3. Install Ollama**
@@ -90,7 +90,7 @@ ollama pull gemma2:2b
 ## Running the App
 
 ```bash
-python run_app.py
+python run_app2.py
 ```
 
 Then open your browser at:
